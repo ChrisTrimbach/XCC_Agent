@@ -286,8 +286,11 @@ def run_job(workflow_id):
     
     data_array=data.split(" ",3)
     print "XCC Workflow Service: Type of Job %s"%data_array[0]
+    write_log('XCC Workflow Service: Type of Job %s'% (data_array[0]))
     print 'XCC Workflow Service: Retrieved next task workflow id %s task %s'% (workflow_id,data_array[1])
-    write_log('XCC Workflow Service: Retrieved next task workflow id %s task %s'% (workflow_id,data_array[1]))   
+    write_log('XCC Workflow Service: Retrieved next task workflow id %s task %s'% (workflow_id,data_array[1]))
+    print 'XCC Workflow Service: ODFE_id =: %s'%workflow_settings['ODFE_ip']
+    write_log ('XCC Workflow Service: ODFE_id =: %s'% (workflow_settings['ODFE_ip']))
     if(data_array[0] == 'JDF'):
         #print 'XCC Workflow Service: Task '+data_array[1]
         print "XCC Workflow Service: JDF"
@@ -651,37 +654,87 @@ def run_job(workflow_id):
                         
     elif(data_array[0] == 'SHARE'):
         print "XCC Workflow Service: Share"
-                
+	    write_log ('XCC Workflow Service: Share')
         import shutil
         import base64
         get_job_settings= urllib2.Request("http://"+Agent_Config.Use_URL+"."+Agent_Config.Use_Domain+"/autoflow/workflow_job_settings.php?%s-%s-%s" % (workflow_id,data_array[0],data_array[1]))
         
         read_job_settings = opener_proxy.open(get_job_settings)
-        job_settings = json.load(read_job_settings)    
-                                
-        try:
-            output = open("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']),"wb")
-            output.write(base64.b64decode(data_array[2]))
-            output.close()
-            write_log('XCC Workflow Service: Send Share task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id))           
-            
-            shutil.copy2("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']),'//%s/%s/%s'%(workflow_settings['Printer_ip'],job_settings['Folder'],job_settings['Filename']))
-            os.remove("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']))
-            #time.sleep(10)
-            req = urllib2.Request("http://"+Agent_Config.Use_URL+"."+Agent_Config.Use_Domain+"/autoflow/autoflow_sent_completed.php?con=SHARE&w_id=%s" % workflow_id)
-            
-            response = opener_proxy.open(req).read().strip()
-            print "XCC Workflow Service: Response %s"%response
-            write_log('XCC Workflow Service: Completed Share task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id))           
-            
-        except:
-            print 'XCC Workflow Service: Error Share task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id)
-            write_log('XCC Workflow Service: Error Share task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id))                       
-            
-            req = urllib2.Request("http://"+Agent_Config.Use_URL+"."+Agent_Config.Use_Domain+"/autoflow/autoflow_sent_error.php?con=SHARE&w_id=%s" % workflow_id)
-            
-            response = opener_proxy.open(req).read().strip()
-            print "XCC Workflow Service: Response %s"%response                         
+        job_settings = json.load(read_job_settings)   
+	
+	if (data_array[1] != '540'):
+	    print 'XCC Workflow Service: %s'% (workflow_id,data_array[1])
+	    write_log ('XCC Workflow Service: %s'% (workflow_id,data_array[1]))	    	    
+	    try:
+		output = open("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']),"wb")
+		output.write(base64.b64decode(data_array[2]))
+		output.close()
+		print 'XCC Workflow Service: Sent Share task %s to DFE %s of workflow id %s'% (data_array[1],workflow_settings['Printer_ip'],workflow_id)
+		write_log('XCC Workflow Service: Sent Share task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id))           	    	    		                
+	
+		shutil.copy2("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']),'//%s/%s/%s'%(workflow_settings['Printer_ip'],job_settings['Folder'],job_settings['Filename']))
+	
+		#time.sleep(10)
+	
+		req = urllib2.Request("http://"+Agent_Config.Use_URL+"."+Agent_Config.Use_Domain+"/autoflow/autoflow_sent_completed.php?con=SHARE&w_id=%s" % workflow_id)
+	
+		response = opener_proxy.open(req).read().strip()
+	
+		print 'XCC Workflow Service: Response %s'% response
+		write_log('XCC Workflow Service: Completed Share task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id))           	    	    
+		
+		time.sleep(100)
+	    except:
+		print 'XCC Workflow Service: Error Share task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id)
+		write_log('XCC Workflow Service: Error Share task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id))                       
+	
+		req = urllib2.Request("http://"+Agent_Config.Use_URL+"."+Agent_Config.Use_Domain+"/autoflow/autoflow_sent_error.php?con=SHARE&w_id=%s" % workflow_id)
+	
+		response = opener_proxy.open(req).read().strip()
+		print 'XCC Workflow Service: Response %s'% response
+		write_log('XCC Workflow Service: Response %s'% response)
+
+	elif (data_array[1] == '540'):
+	    print 'XCC Workflow Service: 540'
+	    write_log ('XCC Workflow Service: 540')	    
+	    #Check amount of IP addresses to upload zip	
+	    for i in range(workflow_settings['ODFE_ip']): 
+		try:
+		    output = open("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']),"wb")
+		    output.write(base64.b64decode(data_array[2]))
+		    output.close()
+		    
+		    print 'XCC Workflow Service: Send Share task %s to offline DFE %s of workflow id %s'% (data_array[1],workflow_settings['ODFE_ip'],workflow_id)
+		    write_log('XCC Workflow Service: Send Share task %s to offline DFE %s of workflow id %s '% (data_array[1],workflow_settings['ODFE_ip'],workflow_id))           
+		    print 'Content of ODFE_IP =: '% (workflow_settings['ODFE_ip'])
+		    write_log('Content of ODFE_IP =: '% (workflow_settings['ODFE_ip']))
+		    
+		    shutil.copy2("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']),'//%s/%s/%s'%(workflow_settings['ODFE_ip'],job_settings['Folder'],job_settings['Filename']))
+		    write_log('XCC Workflow Service: Completed Share task %s to offline DFE %s of workflow id %s '% (data_array[1],workflow_settings['ODFE_ip'],workflow_id))           
+		
+		except:
+		    print 'XCC Workflow Service: Error Share task %s to offline DFE %s of workflow id %s '% (data_array[1],workflow_settings['ODFE_ip'],workflow_id)
+		    write_log('XCC Workflow Service: Error Share task %s to offline DFE %s of workflow id %s '% (data_array[1],workflow_settings['ODFE_ip'],workflow_id))                       
+    
+		    req = urllib2.Request("http://"+Agent_Config.Use_URL+"."+Agent_Config.Use_Domain+"/autoflow/autoflow_sent_error.php?con=SHARE&w_id=%s" % workflow_id)
+    
+		    response = opener_proxy.open(req).read().strip()
+		    print 'XCC Workflow Service: Response %s'% response 	
+		    write_log('XCC Workflow Service: Response %s'% response)
+	
+	    os.remove("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']))
+	    time.sleep(10)
+	    req = urllib2.Request("http://"+Agent_Config.Use_URL+"."+Agent_Config.Use_Domain+"/autoflow/autoflow_sent_completed.php?con=SHARE&w_id=%s" % workflow_id)
+    
+	    response = opener_proxy.open(req).read().strip()
+	    print 'XCC Workflow Service: Completed Share task %s to offline DFE %s of workflow id %s '% (data_array[1],workflow_settings['ODFE_ip'],workflow_id)
+	    write_log('XCC Workflow Service: Completed Share task %s to offline DFE %s of workflow id %s '% (data_array[1],workflow_settings['ODFE_ip'],workflow_id))           
+	
+	print 'Ready to remove'
+	write_log ('Ready to remove')
+	time.sleep(100)
+	os.remove("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']))
+		
     elif(data_array[0] == 'COLORPORT'):
         print "XCC Workflow Service: COLORPORT"
                         
@@ -696,6 +749,7 @@ def run_job(workflow_id):
             output = open("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']),"wb")
             output.write(base64.b64decode(data_array[2]))
             output.close()
+	    print'XCC Workflow Service: Send ColorPort task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id)	
             write_log('XCC Workflow Service: Send ColorPort task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id))           
                     
             shutil.copy2("%s/%s" % (Agent_Config.APP_TEMP_PATH,job_settings['Filename_temp']),'%s/%s/%s'%(Agent_Config.APP_MYDOC_PATH,job_settings['Folder'],job_settings['Filename']))
@@ -704,7 +758,7 @@ def run_job(workflow_id):
             req = urllib2.Request("http://"+Agent_Config.Use_URL+"."+Agent_Config.Use_Domain+"/autoflow/autoflow_sent_completed.php?con=COLORPORT&w_id=%s" % workflow_id)
             
             response = opener_proxy.open(req).read().strip()
-            print "XCC Workflow Service: Response %s"%response 
+            print 'XCC Workflow Service: Completed ColorPort task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id) 
             write_log('XCC Workflow Service: Completed ColorPort task %s to DFE %s of workflow id %s '% (data_array[1],workflow_settings['Printer_ip'],workflow_id))           
             
         except:
@@ -714,7 +768,9 @@ def run_job(workflow_id):
             req = urllib2.Request("http://"+Agent_Config.Use_URL+"."+Agent_Config.Use_Domain+"/autoflow/autoflow_sent_error.php?con=COLORPORT&w_id=%s" % workflow_id)
             
             response = opener_proxy.open(req).read().strip()
-            print "XCC Workflow Service: Response %s"%response    
+            print 'XCC Workflow Service: Response %s'% response  	
+	    write_log('XCC Workflow Service: Response %s'% response)    
+	    
     elif(data_array[0] == 'I1PROFILER'):
         print "XCC Workflow Service: I1PROFILER"
                                 
@@ -755,7 +811,8 @@ def run_job(workflow_id):
         req = urllib2.Request("http://"+Agent_Config.Use_URL+"."+Agent_Config.Use_Domain+"/autoflow/autoflow_sent_error.php?con=undefined+job+type&w_id=%s" % workflow_id)
         
         response = opener_proxy.open(req).read().strip()
-        print "XCC Workflow Service: Response %s"%response                 
+	print 'XCC Workflow Service: Response %s'% response  	
+	write_log('XCC Workflow Service: Response %s'% response)                 
  
         
 check_workflow_status(workflow_id)
