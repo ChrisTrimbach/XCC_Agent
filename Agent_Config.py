@@ -2,7 +2,7 @@ import ConfigParser
 import os.path
 import base64
 from win32com.shell import shell, shellcon
-XCC_Agent_Version="2.54"
+XCC_Agent_Version="2.55"
 APP_Dirname="XCC_Agent"
 App_TEMP_FILES="Temp"
 App_LOG_FILES="Log"
